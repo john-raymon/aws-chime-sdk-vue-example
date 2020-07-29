@@ -1,0 +1,27 @@
+@tailwind base;
+
+@import url('https://fonts.googleapis.com/css?family=Michroma&display=swap');
+
+h1 {
+  @apply text-2xl;
+}
+
+h2 {
+  @apply text-xl;
+}
+
+h3 {
+  @apply text-lg;
+}
+
+h4 {
+  @apply text-sm;
+}
+
+h5 {
+  @apply text-xs;
+}
+
+@tailwind components;
+
+@tailwind utilities;

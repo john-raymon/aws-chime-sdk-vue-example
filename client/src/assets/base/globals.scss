@@ -1,0 +1,20 @@
+.button {
+  @apply
+    bg-green-600
+    rounded-md
+    text-gray-200
+    border-b-4
+    border-green-700
+    text-sm
+    font-bold
+    mt-4
+    p-4
+    tracking-wider;
+  &:active, &:focus {
+    @apply border-b-2 opacity-75;
+  }
+}
+
+.text-field {
+  @apply block border border-gray-300 w-full p-3 rounded mb-4;
+}
