@@ -13,7 +13,7 @@ export default new Vuex.Store({
     userAuth: {
       isAuth: false,
       user: null
-    },
+    }
   },
   mutations: {
     setUserAuth(state, userAuth) {
@@ -21,9 +21,9 @@ export default new Vuex.Store({
     },
     resetAuth(state) {
       state.userAuth = {
-          isAuth: false,
-          user: null
-        };
+        isAuth: false,
+        user: null
+      };
     }
   },
   actions: {
@@ -32,7 +32,7 @@ export default new Vuex.Store({
     },
     logout(context) {
       // clear jwt from localforage
-      Agent.setToken('')
+      Agent.setToken("");
       return context.commit("resetAuth");
     }
   },

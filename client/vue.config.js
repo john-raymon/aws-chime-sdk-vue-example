@@ -22,5 +22,5 @@ module.exports = {
       .use("vue-svg-loader")
       .loader("vue-svg-loader");
   },
-  runtimeCompiler: true,
+  runtimeCompiler: true
 };

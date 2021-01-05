@@ -16,12 +16,12 @@ export default {
     ...mapState(["userAuth"])
   },
   methods: {
-    ...mapActions(['logout']),
+    ...mapActions(["logout"]),
     handleLogout() {
       this.logout().then(() => {
         this.$nextTick().then(() => {
-          this.$router.push({ name: 'sign-in' });
-        })
+          this.$router.push({ name: "sign-in" });
+        });
       });
     }
   }

@@ -12,10 +12,9 @@
 </template>
 
 <script>
-
 export default {
   name: "DefaultLayout",
-  props: ['userAuth'],
+  props: ["userAuth"]
 };
 </script>
 <style lang="scss">

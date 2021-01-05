@@ -19,13 +19,7 @@
           v-model="lastName"
         />
 
-        <input
-          type="text"
-          class="text-field"
-          name="email"
-          placeholder="Email"
-          v-model="email"
-        />
+        <input type="text" class="text-field" name="email" placeholder="Email" v-model="email" />
 
         <input
           type="password"
@@ -35,11 +29,7 @@
           v-model="password"
         />
 
-        <button
-          type="submit"
-          class="button w-full"
-          @click="onSubmit"
-        >
+        <button type="submit" class="button w-full" @click="onSubmit">
           Create Account
         </button>
 
@@ -69,7 +59,7 @@ import { mapActions } from "vuex";
 
 export default {
   name: "AuthPage",
-  props: ['userAuth'],
+  props: ["userAuth"],
   data() {
     return {
       email: "",

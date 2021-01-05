@@ -13,8 +13,8 @@ const routes = [
     name: "meeting-room",
     path: "/join/:meetingTitle?",
     alias: "/join/:meetingTitle",
-    component: MeetingRoom,
-  },
+    component: MeetingRoom
+  }
 ];
 
 const router = new VueRouter({
