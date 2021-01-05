@@ -70,9 +70,19 @@ app.param('meetingTitle', (req, res, next, meetingTitle) => {
   })
   .exec()
   .then((meeting) => {
-    if (meeting) {
-      req.meeting = meeting;
+    if (!meeting) {
+      return next({
+        name: "NotFound",
+        message: "We could not locate this meeting."
+      })
     }
+    if (meeting.hasMeetingEnded) {
+      return next({
+        name: "BadRequest",
+        message: "The meeting has ended.",
+      })
+    }
+    req.meeting = meeting;
     return next();
   }).catch(next);
 });
@@ -96,16 +106,54 @@ app.post('/join/:meetingTitle?', (req, res, next) => {
     });
   }
 
+  const createNewAttendee = (meetingDocument) => {
+    const meeting = meetingDocument.meetingSession.get('Meeting');
+    const uniqueAttendeeId = `attendee-${uuid()}`;
+    /**
+     * note, there may be a 404, meeting not found
+     * if no attendees join within 5 minutes
+     * The moment CreateMeeting or CreateMeetingWithAttendees is invoked
+     * and the meeting is created, the auto end policies
+     * will kick in and if no one joins the meeting,
+     * it will close within 5 minutes.
+     * https://github.com/aws/amazon-chime-sdk-js/issues/400#issuecomment-637264882
+     */
+    return chime.createAttendee({
+      MeetingId: meeting.MeetingId,
+      ExternalUserId: uniqueAttendeeId
+    }).promise().catch((err) => {
+      if (err.code === "NotFound") {
+        throw {
+          name: "BadRequest",
+          message: "The meeting session has expired as no attendees joined within 5 minutes",
+        };
+      }
+      throw err;
+    })
+  }
+
+  const returnMeetingAndAttendeeResponse = (meeting, attendee) => {
+    debugger;
+    return res.json({
+      success: true,
+      joinInfo: {
+        meeting,
+        attendee
+      }
+    });
+  };
+
   /**
    * if the meeting title param is undefined we assume
-   * the user is create a new "meeting" room, so we generate the
-   * unique meeting title for them and return it to the client,
+   * the user is attempting to create a new "meeting" room,
+   * so we generate a new meeting,
+   * with a unique meeting title for them
+   * and return it to the client,
    * allowing the user to share a "join meeting link" with attendees that
    * can be sent in subsequent request
    */
   if (!req.params.meetingTitle) {
    const uniqueMeetingTitle = `meeting-${uuid()}`;
-   debugger;
    return chime.createMeeting({
     ClientRequestToken: uuid(),
     ExternalMeetingId: uniqueMeetingTitle,
@@ -119,19 +167,23 @@ app.post('/join/:meetingTitle?', (req, res, next) => {
     return meeting.save();
    })
    .then((meeting) => {
-     // set-up attendee info
-     res.json({
-      success: true,
-      meeting,
-     })
+     // create new attendee for meeting
+     return createNewAttendee(meeting)
+      .then((attendee) => {
+        return returnMeetingAndAttendeeResponse(meeting.meetingSession.get('Meeting'), attendee);
+      })
    })
    .catch(next);
   }
 
-  return res.json({
-    success: true,
-    meeting: false,
-  })
+  // fetch existing meeting info
+  const meeting = req.meeting;
+  debugger;
+  return createNewAttendee(meeting)
+    .then((attendee) => {
+      return returnMeetingAndAttendeeResponse(meeting.meetingSession.get('Meeting'), attendee);
+    })
+    .catch(next);
 })
 
 
