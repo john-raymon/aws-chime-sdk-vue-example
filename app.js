@@ -13,6 +13,7 @@ const helmet = require('helmet');
 const history = require('connect-history-api-fallback');
 const AWS = require('aws-sdk');
 const app = express();
+const { v4: uuid } = require('uuid');
 
 /**
  * util function to check for missing body fields
@@ -27,7 +28,7 @@ AWS.config.credentials = new AWS.Credentials(process.env.AWSAccessKeyId, process
 // the AWS Chime SDK documentation states the instance of the AWS.Chime object
 // currently must be configured to us-east-1, however the actual region where the
 // meetings are hosted can be configured when invoking Chime.createMeeting
-const chime = new AWS.Chime({ region: 'us-ease-1' });
+const chime = new AWS.Chime({ region: 'us-east-1' });
 chime.endpoint = new AWS.Endpoint('https://service.chime.aws.amazon.com/console');
 
 
@@ -78,12 +79,10 @@ app.param('meetingTitle', (req, res, next, meetingTitle) => {
 
 // utilize chime:createMeeting and chime:createAttendee
 // aws-sdk methods to serve appr
-app.post('/join/:meetingTitle', (req, res, next) => {
+app.post('/join/:meetingTitle?', (req, res, next) => {
   const requiredProps = [
     ['attendeeName', 'Your name is required.'],
   ];
-
-  debugger;
 
   const { hasMissingProps, propErrors } = isBodyMissingProps(
     requiredProps,
@@ -96,12 +95,39 @@ app.post('/join/:meetingTitle', (req, res, next) => {
       errors: propErrors
     });
   }
-  if (req.meeting) {
-    return res.json({
+
+  /**
+   * if the meeting title param is undefined we assume
+   * the user is create a new "meeting" room, so we generate the
+   * unique meeting title for them and return it to the client,
+   * allowing the user to share a "join meeting link" with attendees that
+   * can be sent in subsequent request
+   */
+  if (!req.params.meetingTitle) {
+   const uniqueMeetingTitle = `meeting-${uuid()}`;
+   debugger;
+   return chime.createMeeting({
+    ClientRequestToken: uuid(),
+    ExternalMeetingId: uniqueMeetingTitle,
+   })
+   .promise()
+   .then((chimeMeeting) => {
+    const meeting = new Meetings({
+      title: uniqueMeetingTitle,
+      meetingSession: chimeMeeting,
+    });
+    return meeting.save();
+   })
+   .then((meeting) => {
+     // set-up attendee info
+     res.json({
       success: true,
-      meeting: true,
-    })
+      meeting,
+     })
+   })
+   .catch(next);
   }
+
   return res.json({
     success: true,
     meeting: false,
@@ -124,9 +150,7 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
+  debugger;
   // render the error page
   res.status(err.status || 500).json(err);
 });
