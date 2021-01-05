@@ -95,10 +95,8 @@ export default {
       const observer = {
         videoTileDidUpdate: tileState => {
           console.log({ tileState });
-          // debugger;
           const audioElement = this.$refs.audioElement;
           const isDefaultVideo = tileState.tileId === 1;
-          // debugger;
           // bind audio output to audio HTML DOM element using ref
           this.audioVideo.bindAudioElement(audioElement);
           this.audioVideo.bindVideoElement(
@@ -122,7 +120,9 @@ export default {
       this.audioVideo
         .listAudioInputDevices()
         .then(audioInputDevices => {
-          this.audioVideo.chooseAudioInputDevice(audioInputDevices[0].deviceId);
+          return this.audioVideo.chooseAudioInputDevice(audioInputDevices[0].deviceId);
+        })
+        .then(() => {
           return this.audioVideo.listAudioOutputDevices();
         })
         .then(audioOutputDevices => {
