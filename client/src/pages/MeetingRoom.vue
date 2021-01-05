@@ -5,7 +5,7 @@
     </template>
     <template v-else-if="meetingSession && !error">
       <p>Meeting room</p>
-      <audio ref="audioElement"></audio>
+      <audio id="audio-element" ref="audioElement"></audio>
     </template>
     <template v-else-if="error">
       <p class="mx-auto text-red-500">Oops, there was an error connecting you to this room.</p>
@@ -33,6 +33,7 @@ export default {
     };
   },
   created() {
+    console.log('created() called');
     // redirect to home if "create" or "meetingTitle" id is missing
     if (!this.$route.query.create && !this.$route.params.meetingTitle) {
       this.$router.push("/");
@@ -47,6 +48,17 @@ export default {
         ._post(path, null, true)
         .then(res => {
           this.joinInfo = res.joinInfo;
+          // update join?create=true path
+          // to a sharable meeting path with a unique meetingTitle param
+          // now that we have a meeting created,
+          // ex. /join?create=true -> http://localhost:8080/join/meeting-f8fd96ed-2777-4605-b441-800a6a549800
+          if (!this.$route.params.meetingTitle) {
+            history.pushState(
+              {},
+              null,
+              this.$route.path + '/' + encodeURIComponent(this.joinInfo.meeting.ExternalMeetingId),
+            )
+          }
           this.initMeetingSession(this.joinInfo);
           console.log({ joinInfo: res.joinInfo });
         })
@@ -101,10 +113,12 @@ export default {
           return this.audioVideo.chooseAudioOutputDevice(audioOutputDevices.length ? audioOutputDevices[0].deviceId : null);
         })
         .then(() => {
-          const audioElement = this.$refs;
+          const audioElement = this.$refs.audioElement;
           debugger;
           // bind audio output to audio HTML DOM element using ref
-          this.audioVideo.bindAudioElement(audioElement);
+          return this.audioVideo.bindAudioElement(audioElement);
+        })
+        .then(() => {
           debugger;
           // register audio-video lifecycle observer
           this.audioVideo.addObserver(observer);
