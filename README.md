@@ -21,4 +21,14 @@ Install all dependencies & initiaize the Node.js server along with the client-si
 
 `yarn install && yarn --cwd client install && yarn dev-start`
 
+# How to create a meeting room and invite someone via a sharable link:
+
+1. On the landing-page click on the "create a meeting" button to initiate a new meeting room.
+![](https://i.ibb.co/mhxbZbh/gatherly-1.jpg)
+
+2. After clicking on "create a meeting" you'll be redirected to a meeting room, where a sharable link will be generated including the unique meeting id in the URL path. Copy and share this link with someone for them to join.
+![](https://i.ibb.co/4NR4Bww/gatherly-2.jpg)
+
+
+
 
