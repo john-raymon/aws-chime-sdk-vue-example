@@ -2,6 +2,8 @@ All boilerplate was generated using my template (https://github.com/john-raymon/
 
 ### Gatherly Project
 
+Live demo link: https://gatherly-demo.herokuapp.com
+
 # Add ENV keys:
 
 Create an .env file with the keys from the .env.example file to the.
