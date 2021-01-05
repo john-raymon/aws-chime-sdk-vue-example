@@ -4,8 +4,14 @@
       <p class="mx-auto">Joining a meeting...</p>
     </template>
     <template v-else-if="meetingSession && !error">
-      <p>Meeting room</p>
-      <audio id="audio-element" ref="audioElement"></audio>
+      <div class="flex flex-col py-10">
+        <p>Meeting room</p>
+        <audio ref="audioElement"></audio>
+        <div class="flex flex-col w-1/2">
+          <video class="block" ref="defaultVideoElement"></video>
+          <video class="block" ref="attendeeVideoElement"></video>
+        </div>
+      </div>
     </template>
     <template v-else-if="error">
       <p class="mx-auto text-red-500">Oops, there was an error connecting you to this room.</p>
@@ -33,7 +39,7 @@ export default {
     };
   },
   created() {
-    console.log('created() called');
+    console.log("created() called");
     // redirect to home if "create" or "meetingTitle" id is missing
     if (!this.$route.query.create && !this.$route.params.meetingTitle) {
       this.$router.push("/");
@@ -56,8 +62,8 @@ export default {
             history.pushState(
               {},
               null,
-              this.$route.path + '/' + encodeURIComponent(this.joinInfo.meeting.ExternalMeetingId),
-            )
+              this.$route.path + "/" + encodeURIComponent(this.joinInfo.meeting.ExternalMeetingId)
+            );
           }
           this.initMeetingSession(this.joinInfo);
           console.log({ joinInfo: res.joinInfo });
@@ -87,53 +93,93 @@ export default {
     setUpDevicesAndStart() {
       // observe audio-video lifecycle
       const observer = {
+        videoTileDidUpdate: tileState => {
+          console.log({ tileState });
+          // debugger;
+          const audioElement = this.$refs.audioElement;
+          const isDefaultVideo = tileState.tileId === 1;
+          // debugger;
+          // bind audio output to audio HTML DOM element using ref
+          this.audioVideo.bindAudioElement(audioElement);
+          this.audioVideo.bindVideoElement(
+            tileState.tileId,
+            isDefaultVideo ? this.$refs.defaultVideoElement : this.$refs.attendeeVideoElement
+          );
+        },
         audioVideoDidStart: () => {
           console.log("Started");
         },
-        audioVideoDidStop: (sessionStatus) => {
+        audioVideoDidStop: sessionStatus => {
           console.log("Stopped with a session status code: ", sessionStatus.statusCode());
         },
-        audioVideoDidStartConnecting: (reconnecting) => {
+        audioVideoDidStartConnecting: reconnecting => {
           if (reconnecting) {
             console.log("Attempting to reconnect");
           }
-        },
+        }
       };
       // set up audio input and out put devices, and bind to DOM audio element
-      this.audioVideo.listAudioInputDevices()
+      this.audioVideo
+        .listAudioInputDevices()
         .then(audioInputDevices => {
-          debugger;
           this.audioVideo.chooseAudioInputDevice(audioInputDevices[0].deviceId);
           return this.audioVideo.listAudioOutputDevices();
         })
         .then(audioOutputDevices => {
-          debugger;
           // note: on firefox browsers there audioOutputDevices returns as empty
           // https://github.com/aws/amazon-chime-sdk-js/issues/657#issuecomment-687363939
-          return this.audioVideo.chooseAudioOutputDevice(audioOutputDevices.length ? audioOutputDevices[0].deviceId : null);
+          return this.audioVideo.chooseAudioOutputDevice(
+            audioOutputDevices.length ? audioOutputDevices[0].deviceId : null
+          );
         })
         .then(() => {
           const audioElement = this.$refs.audioElement;
-          debugger;
           // bind audio output to audio HTML DOM element using ref
           return this.audioVideo.bindAudioElement(audioElement);
         })
         .then(() => {
-          debugger;
           // register audio-video lifecycle observer
           this.audioVideo.addObserver(observer);
-          debugger;
-          this.audioVideo.start();
+
+          return this.audioVideo.start();
         })
-        .catch((err) => {
-          debugger;
-          console.log('error', err);
-          this.error = {
-            ...err,
-            message: 'There was an error setting up your audio inputs',
+        .then(() => {
+          this.audioVideo
+            .listVideoInputDevices()
+            .then(videoInputDevices => {
+              return this.audioVideo.chooseVideoInputDevice(
+                videoInputDevices.length ? videoInputDevices[0].deviceId : null
+              );
+            })
+            .then(() => {
+              return this.audioVideo.startLocalVideoTile();
+            });
+        })
+        .then(() => {
+          // Unmute
+          const unmuted = this.audioVideo.realtimeUnmuteLocalAudio();
+
+          if (unmuted) {
+            console.log("Other attendees can hear your audio");
+          } else {
+            // See the realtimeSetCanUnmuteLocalAudio use case below.
+            console.log("You cannot unmute yourself");
+          }
+          const muted = this.audioVideo.realtimeIsLocalAudioMuted();
+          if (muted) {
+            console.log("You are muted");
+          } else {
+            console.log("Other attendees can hear your audio");
           }
         })
-    },
+        .catch(err => {
+          console.log("error", err);
+          this.error = {
+            ...err,
+            message: "There was an error setting up your audio inputs"
+          };
+        });
+    }
   }
 };
 </script>
