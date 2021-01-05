@@ -1,33 +1,5 @@
 <template>
   <div class="default-layout">
-    <nav>
-      <ul>
-        <template v-if="userAuth.isAuth">
-          <li>
-            <router-link to="/secure">
-              Secure page
-            </router-link>
-          </li>
-          <li>
-            <a href="" @click.prevent="$emit('log-out')">
-              Sign out
-            </a>
-          </li>
-        </template>
-        <template v-else>
-          <li>
-            <router-link to="/sign-up">
-              Sign up
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/sign-in">
-              Sign in
-            </router-link>
-          </li>
-        </template>
-      </ul>
-    </nav>
     <main class="main">
       <slot />
     </main>

@@ -1,7 +1,6 @@
 import VueRouter from "vue-router";
-import AuthPage from "@/pages/AuthPage";
 import HomePage from "@/pages/HomePage";
-import SignInPage from "@/pages/SignInPage";
+import MeetingRoom from "@/pages/MeetingRoom";
 import store from "@/vuex";
 
 const routes = [
@@ -11,30 +10,11 @@ const routes = [
     component: HomePage
   },
   {
-    name: "sign-up",
-    path: "/sign-up",
-    component: AuthPage
+    name: "meeting-room",
+    path: "/join/:meetingTitle?",
+    alias: "/join/:meetingTitle",
+    component: MeetingRoom,
   },
-  {
-    name: "sign-in",
-    path: "/sign-in",
-    component: SignInPage,
-  },
-  {
-    name: "secure",
-    path: "/secure",
-    alias: "/protected",
-    component: {
-      template: `
-        <div>
-          This is a protected page-component
-        </div>
-      `
-    },
-    meta: {
-      requireUserAuth: true
-    }
-  }
 ];
 
 const router = new VueRouter({

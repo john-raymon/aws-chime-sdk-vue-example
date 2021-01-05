@@ -64,7 +64,6 @@ app.param('meetingTitle', (req, res, next, meetingTitle) => {
    * (ideally in a prod. env. maybe meetings that have ended can
    * be removed from the db collection after a couple hours so that the unique meeting title can be recycled)
    */
-  debugger;
   return Meetings.findOne({
     title: meetingTitle,
   })
@@ -90,22 +89,6 @@ app.param('meetingTitle', (req, res, next, meetingTitle) => {
 // utilize chime:createMeeting and chime:createAttendee
 // aws-sdk methods to serve appr
 app.post('/join/:meetingTitle?', (req, res, next) => {
-  const requiredProps = [
-    ['attendeeName', 'Your name is required.'],
-  ];
-
-  const { hasMissingProps, propErrors } = isBodyMissingProps(
-    requiredProps,
-    req.body
-  );
-
-  if (hasMissingProps) {
-    return next({
-      name: "ValidationError",
-      errors: propErrors
-    });
-  }
-
   const createNewAttendee = (meetingDocument) => {
     const meeting = meetingDocument.meetingSession.get('Meeting');
     const uniqueAttendeeId = `attendee-${uuid()}`;
@@ -133,12 +116,11 @@ app.post('/join/:meetingTitle?', (req, res, next) => {
   }
 
   const returnMeetingAndAttendeeResponse = (meeting, attendee) => {
-    debugger;
     return res.json({
       success: true,
       joinInfo: {
         meeting,
-        attendee
+        attendee: attendee.Attendee
       }
     });
   };
@@ -178,7 +160,7 @@ app.post('/join/:meetingTitle?', (req, res, next) => {
 
   // fetch existing meeting info
   const meeting = req.meeting;
-  debugger;
+  // create new attendee for meeting
   return createNewAttendee(meeting)
     .then((attendee) => {
       return returnMeetingAndAttendeeResponse(meeting.meetingSession.get('Meeting'), attendee);
@@ -202,7 +184,6 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
-  debugger;
   // render the error page
   res.status(err.status || 500).json(err);
 });
