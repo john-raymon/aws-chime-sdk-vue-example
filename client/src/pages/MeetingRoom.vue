@@ -1,16 +1,19 @@
 <template>
   <div class="meeting-room w-full flex justifty-center items-center">
     <template v-if="!meetingSession && !error">
-      <p class="mx-auto">Joining a meeting...</p>
+      <p class="mx-auto">Joining conversation...</p>
     </template>
     <template v-else-if="meetingSession && !error">
       <div class="flex flex-col py-10">
-        <p>Meeting room</p>
+        <p>Chat room</p>
         <audio ref="audioElement"></audio>
-        <div class="flex flex-col w-1/2">
-          <video class="block" ref="defaultVideoElement"></video>
-          <video class="block" ref="attendeeVideoElement"></video>
-        </div>
+        <ul class="space-y-6 mt-4">
+          <li v-for="(value, key) in $data.roster" :key="key">
+            <div class="w-20 h-20 bg-gray-400 rounded-full overflow-hidden">
+              <p class="text-xs">{{ value.externalUserId }}</p>
+            </div>
+          </li>
+        </ul>
       </div>
     </template>
     <template v-else-if="error">
@@ -24,7 +27,8 @@ import {
   DefaultDeviceController,
   DefaultMeetingSession,
   LogLevel,
-  MeetingSessionConfiguration
+  MeetingSessionConfiguration,
+  DefaultActiveSpeakerPolicy
 } from "amazon-chime-sdk-js";
 
 export default {
@@ -35,7 +39,8 @@ export default {
       audioVideo: null, // type of AudioVideoFacade object
       joinInfo: null,
       error: null,
-      enableWebAudio: true
+      enableWebAudio: true,
+      roster: {},
     };
   },
   created() {
@@ -93,17 +98,6 @@ export default {
     setUpDevicesAndStart() {
       // observe audio-video lifecycle
       const observer = {
-        videoTileDidUpdate: tileState => {
-          console.log({ tileState });
-          const audioElement = this.$refs.audioElement;
-          const isDefaultVideo = tileState.tileId === 1;
-          // bind audio output to audio HTML DOM element using ref
-          this.audioVideo.bindAudioElement(audioElement);
-          this.audioVideo.bindVideoElement(
-            tileState.tileId,
-            isDefaultVideo ? this.$refs.defaultVideoElement : this.$refs.attendeeVideoElement
-          );
-        },
         audioVideoDidStart: () => {
           console.log("Started");
         },
@@ -116,6 +110,24 @@ export default {
           }
         }
       };
+
+      const handleAttendeeIdPresence = (attendeeId, present, externalUserId) => {
+        if (!present) {
+          const roster = { ...this.roster };
+          delete roster[attendeeId];
+          this.roster = roster;
+          return;
+        }
+        if (!this.roster[attendeeId]) {
+          const roster = { ...this.roster };
+          roster[attendeeId] = {
+            externalUserId,
+          };
+          this.roster = roster;
+        }
+      };
+
+
       // set up audio input and out put devices, and bind to DOM audio element
       this.audioVideo
         .listAudioInputDevices()
@@ -140,37 +152,10 @@ export default {
         .then(() => {
           // register audio-video lifecycle observer
           this.audioVideo.addObserver(observer);
-
+          // subscribe to realtime callbacks to track attendee presence changes,
+          // and subscribe to callback to track active speaker
+          this.audioVideo.realtimeSubscribeToAttendeeIdPresence(handleAttendeeIdPresence.bind(this));
           return this.audioVideo.start();
-        })
-        .then(() => {
-          this.audioVideo
-            .listVideoInputDevices()
-            .then(videoInputDevices => {
-              return this.audioVideo.chooseVideoInputDevice(
-                videoInputDevices.length ? videoInputDevices[0].deviceId : null
-              );
-            })
-            .then(() => {
-              return this.audioVideo.startLocalVideoTile();
-            });
-        })
-        .then(() => {
-          // Unmute
-          const unmuted = this.audioVideo.realtimeUnmuteLocalAudio();
-
-          if (unmuted) {
-            console.log("Other attendees can hear your audio");
-          } else {
-            // See the realtimeSetCanUnmuteLocalAudio use case below.
-            console.log("You cannot unmute yourself");
-          }
-          const muted = this.audioVideo.realtimeIsLocalAudioMuted();
-          if (muted) {
-            console.log("You are muted");
-          } else {
-            console.log("Other attendees can hear your audio");
-          }
         })
         .catch(err => {
           console.log("error", err);

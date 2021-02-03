@@ -9,7 +9,6 @@ module.exports = {
       patterns: ["./src/assets/base/*.scss"]
     }
   },
-
   chainWebpack: config => {
     const svgRule = config.module.rule("svg");
 
