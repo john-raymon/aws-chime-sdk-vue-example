@@ -1,6 +1,6 @@
-All boilerplate was generated using my template (https://github.com/john-raymon/nodejs-express-vue-template)
+(All boilerplate was generated using my template (https://github.com/john-raymon/nodejs-express-vue-template))
 
-### Gatherly Project
+### AWS Chime SDK example using Node.js, Express, Vue.js & MongoDB
 
 Live demo link: https://gatherly-demo.herokuapp.com
 
