@@ -32,7 +32,7 @@ Install all dependencies & initiaize the Node.js server along with the client-si
 ![](https://i.ibb.co/4NR4Bww/gatherly-2.jpg)
 
 3. Once all attendees have joined, you should both see each other's beautiful faces 😎
-![](https://i.ibb.co/w0N6sBp/gatherly-3.jpg)
+![gatherly-3](https://github.com/john-raymon/aws-chime-sdk-vue-example/assets/30238579/49257728-f486-4aab-bf33-5d0c95dbde85)
 
 
 
